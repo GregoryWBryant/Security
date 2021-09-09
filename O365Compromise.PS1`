@@ -1,0 +1,56 @@
+<#
+Used for gathering information after an account compromise
+#>
+
+#Put in the Username that is Compromised
+$Username = Read-host "Enter Username to Review, Format Username@email.com: "
+
+
+#Provide the Office 365 Admin Credintials
+$UserCredential = Get-Credential
+
+
+#Connects to Office 365 to revoke user
+Connect-AzureAD -Credential $UserCredential
+
+
+#Revokes user
+Get-AzureADUser -SearchString $Username | Revoke-AzureADUserAllRefreshToken
+
+
+#Creates the Session with 365 Exchange
+$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication  Basic -AllowRedirection
+
+#Brings in the Commands
+Import-PSSession $Session
+
+
+#List all Rules and export to a CSV on your desktop
+Get-InboxRule -Mailbox $Username | Export-Csv -Path "C:\Users\$env:UserName\Desktop\O365Rules.csv" -NoTypeInformation
+
+
+#Remove all Rules
+Get-InboxRule -Mailbox $Username | Remove-InboxRule
+
+
+#Connects to Office 365 to reset the password
+Connect-MsolService -Credential $UserCredential
+
+
+#Generates a random 16 digit password
+$Password = ([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126)) + 0..9 | sort {Get-Random})[0..16] -join ''
+
+
+#Resets the password
+Set-MsolUserPassword -UserPrincipalName $Username -NewPassword $Password
+
+
+#Prints out the new password to screen
+Write-Output "New password is set to: " $Password
+
+
+Read-Host "Pause to copy the password, press enter to continue"
+
+
+#Exits the Script
+Read-Host "Last chance to Reveiw anything, press enter to exit"
