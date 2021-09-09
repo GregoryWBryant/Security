@@ -1,6 +1,6 @@
 <#
 Script for parsing logs from Cisco AMP
-I am not the original Autho of this but do not recall where it is from.
+I am not the original Author of this but do not recall where it is from.
 #>
 
 #A Powershell version of the Cisco AMP for Windows debug log parser.
